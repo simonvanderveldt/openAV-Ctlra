@@ -1,4 +1,5 @@
 devices_src = files('3dconnexion.c',
+                    'ableton_push2.c',
                     'firmata.c',
                     'midi_generic.c',
                     'ni_kontrol_f1.c',
