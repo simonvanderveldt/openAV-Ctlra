@@ -201,10 +201,15 @@ int ableton_push2_midi_input_cb(uint8_t nbytes, uint8_t * buf, void *ud)
 			int id = dev->cc_to_btn_id[buf[1]];
 			if(id == -1) {
 				id = dev->cc_to_enc_id[buf[1]];
+				int clock = buf[2];
+				int anticlock = 127 - buf[2];
+				float delta = (buf[2] > 64 ? anticlock : clock)  / 210.f;
 				struct ctlra_event_t event = {
 					.type = CTLRA_EVENT_ENCODER,
 					.encoder = {
 						.id = id,
+						.flags = CTLRA_EVENT_ENCODER_FLAG_FLOAT,
+						.delta_float = delta,
 					},
 				};
 				struct ctlra_event_t *e = {&event};
