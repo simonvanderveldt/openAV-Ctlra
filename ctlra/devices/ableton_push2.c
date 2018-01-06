@@ -120,6 +120,7 @@ static const char *ableton_push2_button_names[] = {
 	"eleventh encoder touch",
 	"second encoder touch",
 	"first encoder touch",
+	"touch strip touch",
 };
 #define CONTROL_NAMES_BUTTONS_SIZE (sizeof(ableton_push2_button_names) /\
 				    sizeof(ableton_push2_button_names[0]))
@@ -145,10 +146,10 @@ static const char *ableton_push2_control_get_name(enum ctlra_event_type_t type,
 			       uint32_t control)
 {
 	switch(type) {
-	// case CTLRA_EVENT_SLIDER:
-	// 	if(control >= CONTROL_NAMES_SLIDERS_SIZE)
-	// 		return 0;
-	// 	return ni_kontrol_z1_names_sliders[control];
+	case CTLRA_EVENT_SLIDER:
+		if(control >= 1)
+			return 0;
+		return "touch strip";
 	case CTLRA_EVENT_BUTTON:
 		if(control >= CONTROL_NAMES_BUTTONS_SIZE)
 			return 0;
@@ -258,6 +259,19 @@ int ableton_push2_midi_input_cb(uint8_t nbytes, uint8_t * buf, void *ud)
 				dev->base.event_func(&dev->base, 1, &e,
 					dev->base.event_func_userdata);
 			}
+		} break;
+
+		case 0xe0: /* pitch bend */ {
+			struct ctlra_event_t event = {
+				.type = CTLRA_EVENT_SLIDER,
+				.slider = {
+					.id = 0,
+					.value = (buf[2] + buf[3]) / 100.f,
+				},
+			};
+			struct ctlra_event_t *e = {&event};
+			dev->base.event_func(&dev->base, 1, &e,
+				dev->base.event_func_userdata);
 		} break;
 	};
 
@@ -403,6 +417,7 @@ ctlra_ableton_push2_connect(ctlra_event_func event_func, void *userdata,
 	dev->note_to_btn_id[8] = counter++; // eleventh encoder touch
 	dev->note_to_btn_id[9] = counter++; // second encoder touch
 	dev->note_to_btn_id[10] = counter++; // first encoder touch
+	dev->note_to_btn_id[12] = counter++; // touch strip touch
 
 	counter = 0;
 	dev->cc_to_enc_id[14] = counter++; // first encoder (from the left, dented)
