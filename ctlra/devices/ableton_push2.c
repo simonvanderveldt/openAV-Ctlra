@@ -109,6 +109,17 @@ static const char *ableton_push2_button_names[] = {
 	"double loop",
 	"delete",
 	"undo",
+	"third encoder touch",
+	"fourth encoder touch",
+	"fifth encoder touch",
+	"sixth encoder touch",
+	"sevent encoder touch",
+	"eighth encoder touch",
+	"ninth encoder touch",
+	"tenth encoder touch",
+	"eleventh encoder touch",
+	"second encoder touch",
+	"first encoder touch",
 };
 #define CONTROL_NAMES_BUTTONS_SIZE (sizeof(ableton_push2_button_names) /\
 				    sizeof(ableton_push2_button_names[0]))
@@ -128,6 +139,7 @@ static const char *ableton_push2_encoder_names[] = {
 };
 #define CONTROL_NAMES_ENCODERS_SIZE (sizeof(ableton_push2_encoder_names) /\
 				    sizeof(ableton_push2_encoder_names[0]))
+
 
 static const char *ableton_push2_control_get_name(enum ctlra_event_type_t type,
 			       uint32_t control)
@@ -163,6 +175,7 @@ struct ableton_push2_t {
 	struct ctlra_midi_t *midi;
 	int16_t cc_to_btn_id[127];
 	int16_t cc_to_enc_id[127];
+	int16_t note_to_btn_id[127];
 };
 
 static uint32_t
@@ -183,13 +196,12 @@ int ableton_push2_midi_input_cb(uint8_t nbytes, uint8_t * buf, void *ud)
 	switch(buf[0] & 0xf0) {
 		case 0x90: /* Note On */
 		case 0x80: /* Note Off */ {
+			int id = dev->note_to_btn_id[buf[1]];
 			struct ctlra_event_t event = {
 				.type = CTLRA_EVENT_BUTTON,
 				.button  = {
-					.id = buf[1],
+					.id = id,
 					.pressed = buf[0] >= 0x90,
-					.has_pressure = 1,
-					.pressure = buf[2] / 127.f,
 				},
 			};
 			struct ctlra_event_t *e = {&event};
@@ -289,9 +301,11 @@ ctlra_ableton_push2_connect(ctlra_event_func event_func, void *userdata,
 	for(int i = 0; i < 127; i++) {
 	   dev->cc_to_btn_id[i] = -1;
 	   dev->cc_to_enc_id[i] = -1;
+		 dev->note_to_btn_id[i] = -1;
 	}
 
 	int counter = 0;
+  // MIDI cc buttons
 	dev->cc_to_btn_id[3] = counter++; // tap tempo
 	dev->cc_to_btn_id[9] = counter++; // metronome
 	dev->cc_to_btn_id[20] = counter++; // first unlabelled button below the screen (from the left)
@@ -357,6 +371,18 @@ ctlra_ableton_push2_connect(ctlra_event_func event_func, void *userdata,
 	dev->cc_to_btn_id[117] = counter++; // double loop
 	dev->cc_to_btn_id[118] = counter++; // delete
 	dev->cc_to_btn_id[119] = counter++; // undo
+  // MIDI note buttons
+	dev->note_to_btn_id[0] = counter++; // third encoder touch
+	dev->note_to_btn_id[1] = counter++; // fourth encoder touch
+	dev->note_to_btn_id[2] = counter++; // fifth encoder touch
+	dev->note_to_btn_id[3] = counter++; // sixth encoder touch
+	dev->note_to_btn_id[4] = counter++; // sevent encoder touch
+	dev->note_to_btn_id[5] = counter++; // eighth encoder touch
+	dev->note_to_btn_id[6] = counter++; // ninth encoder touch
+	dev->note_to_btn_id[7] = counter++; // tenth encoder touch
+	dev->note_to_btn_id[8] = counter++; // eleventh encoder touch
+	dev->note_to_btn_id[9] = counter++; // second encoder touch
+	dev->note_to_btn_id[10] = counter++; // first encoder touch
 
 	counter = 0;
 	dev->cc_to_enc_id[14] = counter++; // first encoder (from the left, dented)
