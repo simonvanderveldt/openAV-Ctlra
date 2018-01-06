@@ -157,6 +157,8 @@ static const char *ableton_push2_control_get_name(enum ctlra_event_type_t type,
 		if(control >= CONTROL_NAMES_ENCODERS_SIZE)
 			return 0;
 		return ableton_push2_encoder_names[control];
+	case CTLRA_EVENT_GRID:
+		return "grid";
 	// case CTLRA_FEEDBACK_ITEM:
 	// 	if(control >= CONTROL_NAMES_FEEDBACK_SIZE)
 	// 		return 0;
@@ -176,6 +178,7 @@ struct ableton_push2_t {
 	int16_t cc_to_btn_id[127];
 	int16_t cc_to_enc_id[127];
 	int16_t note_to_btn_id[127];
+	int16_t note_to_grid_id[127];
 };
 
 static uint32_t
@@ -197,16 +200,32 @@ int ableton_push2_midi_input_cb(uint8_t nbytes, uint8_t * buf, void *ud)
 		case 0x90: /* Note On */
 		case 0x80: /* Note Off */ {
 			int id = dev->note_to_btn_id[buf[1]];
-			struct ctlra_event_t event = {
-				.type = CTLRA_EVENT_BUTTON,
-				.button  = {
-					.id = id,
-					.pressed = buf[0] >= 0x90,
-				},
-			};
-			struct ctlra_event_t *e = {&event};
-			dev->base.event_func(&dev->base, 1, &e,
-						dev->base.event_func_userdata);
+			if(id == -1) {
+				id = dev->note_to_grid_id[buf[1]];
+				struct ctlra_event_t event = {
+					.type = CTLRA_EVENT_GRID,
+					.grid  = {
+						.id = 0,
+						.flags = CTLRA_EVENT_GRID_FLAG_PRESSURE,
+						.pos = id,
+            .pressure = buf[2] / 127.f,
+					},
+				};
+				struct ctlra_event_t *e = {&event};
+				dev->base.event_func(&dev->base, 1, &e,
+							dev->base.event_func_userdata);
+			} else {
+				struct ctlra_event_t event = {
+					.type = CTLRA_EVENT_BUTTON,
+					.button  = {
+						.id = id,
+						.pressed = buf[0] >= 0x90,
+					},
+				};
+				struct ctlra_event_t *e = {&event};
+				dev->base.event_func(&dev->base, 1, &e,
+							dev->base.event_func_userdata);
+			}
 		} break;
 
 		case 0xb0: /* control change */ {
@@ -302,6 +321,7 @@ ctlra_ableton_push2_connect(ctlra_event_func event_func, void *userdata,
 	   dev->cc_to_btn_id[i] = -1;
 	   dev->cc_to_enc_id[i] = -1;
 		 dev->note_to_btn_id[i] = -1;
+		 dev->note_to_grid_id[i] = -1;
 	}
 
 	int counter = 0;
@@ -396,6 +416,72 @@ ctlra_ableton_push2_connect(ctlra_event_func event_func, void *userdata,
 	dev->cc_to_enc_id[77] = counter++; // ninth encoder
 	dev->cc_to_enc_id[78] = counter++; // tenth encoder
 	dev->cc_to_enc_id[79] = counter++; // eleventh encoder
+
+	counter = 0;
+	dev->note_to_grid_id[36] = counter++; // grid bottom row, leftmost button
+	dev->note_to_grid_id[37] = counter++; //
+	dev->note_to_grid_id[38] = counter++; //
+	dev->note_to_grid_id[39] = counter++; //
+	dev->note_to_grid_id[40] = counter++; //
+	dev->note_to_grid_id[41] = counter++; //
+	dev->note_to_grid_id[42] = counter++; //
+	dev->note_to_grid_id[43] = counter++; //
+	dev->note_to_grid_id[44] = counter++; // grid second row from the bottom, leftmost button
+	dev->note_to_grid_id[45] = counter++; //
+	dev->note_to_grid_id[46] = counter++; //
+	dev->note_to_grid_id[47] = counter++; //
+	dev->note_to_grid_id[48] = counter++; //
+	dev->note_to_grid_id[49] = counter++; //
+	dev->note_to_grid_id[50] = counter++; //
+	dev->note_to_grid_id[51] = counter++; //
+	dev->note_to_grid_id[52] = counter++; // grid third row from the bottom, leftmost button
+	dev->note_to_grid_id[53] = counter++; //
+	dev->note_to_grid_id[54] = counter++; //
+	dev->note_to_grid_id[55] = counter++; //
+	dev->note_to_grid_id[56] = counter++; //
+	dev->note_to_grid_id[57] = counter++; //
+	dev->note_to_grid_id[58] = counter++; //
+	dev->note_to_grid_id[59] = counter++; //
+	dev->note_to_grid_id[60] = counter++; // grid fourth row from the bottom, leftmost button
+	dev->note_to_grid_id[61] = counter++; //
+	dev->note_to_grid_id[62] = counter++; //
+	dev->note_to_grid_id[63] = counter++; //
+	dev->note_to_grid_id[64] = counter++; //
+	dev->note_to_grid_id[65] = counter++; //
+	dev->note_to_grid_id[66] = counter++; //
+	dev->note_to_grid_id[67] = counter++; //
+	dev->note_to_grid_id[68] = counter++; // grid fifth row from the bottom, leftmost button
+	dev->note_to_grid_id[69] = counter++; //
+	dev->note_to_grid_id[70] = counter++; //
+	dev->note_to_grid_id[71] = counter++; //
+	dev->note_to_grid_id[72] = counter++; //
+	dev->note_to_grid_id[73] = counter++; //
+	dev->note_to_grid_id[74] = counter++; //
+	dev->note_to_grid_id[75] = counter++; //
+	dev->note_to_grid_id[76] = counter++; // grid sixth row from the bottom, leftmost button
+	dev->note_to_grid_id[77] = counter++; //
+	dev->note_to_grid_id[78] = counter++; //
+	dev->note_to_grid_id[79] = counter++; //
+	dev->note_to_grid_id[80] = counter++; //
+	dev->note_to_grid_id[81] = counter++; //
+	dev->note_to_grid_id[82] = counter++; //
+	dev->note_to_grid_id[83] = counter++; //
+	dev->note_to_grid_id[84] = counter++; // grid seventh row from the bottom, leftmost button
+	dev->note_to_grid_id[85] = counter++; //
+	dev->note_to_grid_id[86] = counter++; //
+	dev->note_to_grid_id[87] = counter++; //
+	dev->note_to_grid_id[88] = counter++; //
+	dev->note_to_grid_id[89] = counter++; //
+	dev->note_to_grid_id[90] = counter++; //
+	dev->note_to_grid_id[91] = counter++; //
+	dev->note_to_grid_id[92] = counter++; // grid eight row from the bottom, leftmost button
+	dev->note_to_grid_id[93] = counter++; //
+	dev->note_to_grid_id[94] = counter++; //
+	dev->note_to_grid_id[95] = counter++; //
+	dev->note_to_grid_id[96] = counter++; //
+	dev->note_to_grid_id[97] = counter++; //
+	dev->note_to_grid_id[98] = counter++; //
+	dev->note_to_grid_id[99] = counter++; //
 
 	dev->midi = ctlra_midi_open("Ctlra PUSH2",
 				    ableton_push2_midi_input_cb, dev);
